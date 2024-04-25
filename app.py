@@ -2,6 +2,10 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, request, render_template, redirect, session, Response, send_from_directory
 from flask_bootstrap import Bootstrap
+from s3_functions import upload_file
+from werkzeug.utils import secure_filename
+
+
 from lib.database_connection import get_flask_database_connection
 from lib.space_repository import SpaceRepository
 from lib.space import Space
@@ -20,44 +24,45 @@ import secrets
 
 # Create a new Flask app
 app = Flask(__name__)
-# S3_BUCKET = 'makersbnb'
+UPLOAD_FOLDER = "uploads"
+BUCKET = "makersbnb"
 Bootstrap(app)
 
 
 """
 Routes for file upload
 """
-load_dotenv()
+# load_dotenv()
 
-app.config['S3_BUCKET'] = 'makersbnb'
-app.config['S3_KEY'] = os.environ.get("AWS_ACCESS_KEY")
-app.config['S3_SECRET'] = os.environ.get("AWS_ACCESS_SECRET")
-app.config['S3_LOCATION'] = 'http://{}.s3.amazonaws.com/'.format(S3_BUCKET)
+# app.config['S3_BUCKET'] = 'makersbnb'
+# app.config['S3_KEY'] = os.environ.get("AWS_ACCESS_KEY")
+# app.config['S3_SECRET'] = os.environ.get("AWS_ACCESS_SECRET")
+# app.config['S3_LOCATION'] = 'http://{}.s3.amazonaws.com/'.format(S3_BUCKET)
 
-s3 = boto3.client(
-    "s3",
-    aws_access_key_id=app.config['S3_KEY'],
-    aws_secret_access_key=app.config['S3_SECRET']
-)
+# s3 = boto3.client(
+#     "s3",
+#     aws_access_key_id=app.config['S3_KEY'],
+#     aws_secret_access_key=app.config['S3_SECRET']
+# )
 
-app.route("/upload", methods = ["POST"])
+# app.route("/upload", methods = ["POST"])
 
-def upload_file():
-    if "user_file" not in request.files:
-        return "No user_file key in request.files"
+# def upload_file():
+#     if "user_file" not in request.files:
+#         return "No user_file key in request.files"
 
-    file = request.files["user_file"]
+#     file = request.files["user_file"]
 
-    if file.filename == "":
-        return "Please select a file"
+#     if file.filename == "":
+#         return "Please select a file"
 
-    if file:
-        file.filename = secure_filename(file.filename)
-        output = send_to_s3(file, app.config["S3_BUCKET"])
-        return str(output)
+#     if file:
+#         file.filename = secure_filename(file.filename)
+#         output = send_to_s3(file, app.config["S3_BUCKET"])
+#         return str(output)
 
-    else:
-        return redirect("/upload")
+#     else:
+#         return redirect("/upload")
 
 
 
@@ -180,9 +185,21 @@ def create_spaces():
     connection = get_flask_database_connection(app)
     repository = SpaceRepository(connection)
     space = Space(None, request.form["space_name"], request.form["space_description"], request.form["price"], 1)
-    
+    print(request.form["space_photo"])
+    upload = upload_file(request.form["space_photo"], BUCKET)
     repository.create(space)
     return redirect('/spaces')
+
+
+
+@app.route("/upload", methods=['POST'])
+def upload():
+    if request.method == "POST":
+        f = request.files['file']
+        f.save(os.path.join(UPLOAD_FOLDER, secure_filename(f.filename)))
+        upload_file(f"uploads/{f.filename}", BUCKET)
+        return redirect("/spaces/list_a_space.html")
+
 
 
 

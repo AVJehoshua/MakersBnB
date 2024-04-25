@@ -7,11 +7,9 @@
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
     />
     <link rel="stylesheet" href="/static/style.css" />
-    <link
-      rel="stylesheet"
-      href="../../static/list_a_space.css"
-      type="text/css"
-    />
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1605.0.min.js"></script>
+    <link rel="stylesheet" href="/static/list_a_space.css" type="text/css" />
+    <script type="text/javascript" src="/static/listSpace.js" defer></script>
   </head>
   <body>
     {% include 'navbar/navbar.html' %}
@@ -19,7 +17,7 @@
     <br /><br />
     <div class="list-a-space-form-container">
       <h2>List a Space</h2>
-      <form action="/list_a_space" method="POST">
+      <form action="/list_a_space" method="POST" onsubmit="uploadPhoto(event)">
         <div class="list-a-space-form-container">
           <label for="space_name">Space Name</label>
           <input type="text" name="space_name" id="space_name" />
@@ -27,8 +25,13 @@
           <input type="text" name="space_description" id="space_description" />
           <label for="price">Price £££</label>
           <input type="number" name="price" id="price" /> <br /><br />
+          <input
+            type="file"
+            name="space_photo"
+            accept="image/*"
+            value="Upload Photo of Space"
+          />
           <input type="submit" value="Create Space" />
-          <input type="submit" value="Upload Photo of Space" />
         </div>
         <br />
         <p><a href="/spaces">Back to list of spaces </a></p>

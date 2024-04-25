@@ -18,7 +18,7 @@ class SpaceRepository:
     # Create a new space
     def create(self, new_space):
         rows = self._connection.execute('INSERT INTO spaces (space_name, space_description, price, host_id) VALUES (%s, %s, %s, %s) RETURNING id', [
-                                    new_space.space_name, new_space.space_description, new_space.price, new_space.host_id])
+                                    new_space.space_name, new_space.space_description,  new_space.price, new_space.host_id])
         row = rows[0]
         new_space.id = row["id"]
         return new_space

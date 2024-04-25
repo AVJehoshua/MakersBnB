@@ -7,6 +7,7 @@ class Space:
         self.space_description= space_description
         self.price = price
         self.host_id = host_id
+        # self.space_image = space_image
         self.guest_id=guest_id
 
     # This method allows our tests to assert that the objects it expects
