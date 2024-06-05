@@ -14,36 +14,56 @@ from lib.login import LoginUser
 from lib.login_validator import LoginValidator
 from lib.users_repository import *
 from lib.users import *
-import boto3, botocore
-# from botocore.exceptions import NoCredentialsError
+import boto3
+
 
 
 
 import json
 import secrets
 
+# load env variables from .env file
+load_dotenv()
+
 # Create a new Flask app
 app = Flask(__name__)
-UPLOAD_FOLDER = "uploads"
-BUCKET = "makersbnb"
+# UPLOAD_FOLDER = "uploads"
+# BUCKET = "makersbnb"
 Bootstrap(app)
 
 
 """
 Routes for file upload
 """
-# load_dotenv()
 
 # app.config['S3_BUCKET'] = 'makersbnb'
 # app.config['S3_KEY'] = os.environ.get("AWS_ACCESS_KEY")
 # app.config['S3_SECRET'] = os.environ.get("AWS_ACCESS_SECRET")
 # app.config['S3_LOCATION'] = 'http://{}.s3.amazonaws.com/'.format(S3_BUCKET)
 
-# s3 = boto3.client(
-#     "s3",
-#     aws_access_key_id=app.config['S3_KEY'],
-#     aws_secret_access_key=app.config['S3_SECRET']
-# )
+
+s3 = boto3.client(
+    "s3",
+    aws_access_key_id= os.getenv('AWS_ACCESS_KEY'),
+    aws_secret_access_key= os.getenv('AWS_ACCESS_SECRET')
+)
+
+BUCKET_NAME = "makersbnb"
+
+app.route('/list_a_space', methods= "POST")
+def upload(): 
+    if request.method == "POST":
+        img = request.files['space_photo']
+        if img:
+            filename = secure_filename(img.filename)
+            img.save(filename)
+            s3.upload_file(
+                Bucket = BUCKET_NAME,
+                Filename = filename,
+                Key = filename
+            )
+            msg = "Uploaded successfully!"
+    return render_template("/spaces/list_a_space.html", msg=msg)
 
 # app.route("/upload", methods = ["POST"])
 
@@ -78,7 +98,7 @@ def get_index():
     return render_template('users/index.html')
 
 
-@app.route("/signUp")
+@app.route("/signUp", methods=["GET"])
 def get_sign_up_page():
     return render_template("users/signUp.html")
 
@@ -90,12 +110,6 @@ def get_about():
 
 @app.route("/signUp", methods=["POST"])
 def create_user():
-
-    if 'token' in session:
-        response = {'token': session['token'], 'message': 'Already logged in'}
-        return Response(json.dumps(response), status=200, mimetyoe='application/json')
-    
-    else:
         connection = get_flask_database_connection(app)
         repository = UserRepository(connection)
 
@@ -124,11 +138,11 @@ def get_login():
 
 @app.route("/login", methods=["POST"])
 def login_user():
-    if 'token' in session:
-        response = {'token': session['token'], 'message': 'Already logged in'}
-        return Response(json.dumps(response), status=200, mimetype='application/json')
+    # if 'token' in session:
+    #     response = {'token': session['token'], 'message': 'Already logged in'}
+    #     return Response(json.dumps(response), status=200, mimetype='application/json')
     
-    else:
+    # else:
         connection = get_flask_database_connection(app)
         repository = LoginRepository(connection)
         validator = LoginValidator(
@@ -156,13 +170,13 @@ def login_user():
             )
             return redirect(f"/spaces")
         else:
-            return Response(response={}, status=400, mimetype='application/json')
+            return Response(response={"error logging in"}, status=400, mimetype='application/json')
         
 @app.route('/logout',methods=['GET'])
 def get_logout():
     session.pop('token', None)
     print("session ended")
-    return redirect(f"/index")
+    return redirect(f"/")
 
 
 """
@@ -185,21 +199,21 @@ def create_spaces():
     connection = get_flask_database_connection(app)
     repository = SpaceRepository(connection)
     space = Space(None, request.form["space_name"], request.form["space_description"], request.form["price"], 1)
-    print(request.form["space_photo"])
-    upload = upload_file(request.form["space_photo"], BUCKET)
+    # print("space photo data:", request.form["space_photo"])
+    # BUCKET = "makersbnb"
+    # upload = upload_file(request.form["space_photo"], BUCKET)
     repository.create(space)
     return redirect('/spaces')
 
 
 
-@app.route("/upload", methods=['POST'])
-def upload():
-    if request.method == "POST":
-        f = request.files['file']
-        f.save(os.path.join(UPLOAD_FOLDER, secure_filename(f.filename)))
-        upload_file(f"uploads/{f.filename}", BUCKET)
-        return redirect("/spaces/list_a_space.html")
-
+# @app.route("/upload", methods=['POST'])
+# def upload():
+#     if request.method == "POST":
+#         f = request.files['file']
+#         f.save(os.path.join(UPLOAD_FOLDER, secure_filename(f.filename)))
+#         upload_file(f"uploads/{f.filename}", BUCKET)
+#         return redirect("/spaces/list_a_space.html")
 
 
 

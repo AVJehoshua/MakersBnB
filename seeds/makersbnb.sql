@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS spaces(
     price INT,
     host_id INT,
     guest_id INT,
+    space_booked INT,
     CONSTRAINT fk_host FOREIGN KEY (host_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_guest FOREIGN KEY (guest_id) REFERENCES users(id) ON DELETE CASCADE
 );
