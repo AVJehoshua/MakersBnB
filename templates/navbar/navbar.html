@@ -1,5 +1,9 @@
 <nav class="navbar navbar-expand-lg navbar-custom">
+  {% if access == "granted" %}
+  <a class="navbar-brand" href="/spaces">
+  {% elif access == "denied" %}
   <a class="navbar-brand" href="/">
+  {% endif %}
     <svg
       xmlns="http://www.w3.org/2000/svg"
       xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -84,8 +88,12 @@
     <div class="navbar-nav mr-auto"></div>
 
     <div class="navbar-nav">
-      <a class="nav-item nav-link" href="/index/about">About</a>
+      <a class="nav-item nav-link" href="/about">About</a>
+      {% if visibility == 'hidden' %}
+      <a class="nav-item nav-link" href="/logout">Logout</a>
+      {% else %}
       <a class="nav-item nav-link" href="/login">Login</a>
+      {% endif %}
     </div>
     <form class="form-inline my-2 my-lg-0">
       <input

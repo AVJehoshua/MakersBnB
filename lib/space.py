@@ -1,7 +1,7 @@
 class Space:
     # We initialise with all of our attributes
     # Each column in the table should have an attribute here
-    def __init__(self, id, space_name, space_description, price, host_id, guest_id=0, space_booked=0):
+    def __init__(self, id, space_name, space_description, price, host_id, guest_id=0):
         self.id = id
         self.space_name = space_name
         self.space_description= space_description
@@ -9,7 +9,7 @@ class Space:
         self.host_id = host_id
         # self.space_image = space_image
         self.guest_id = guest_id
-        self.space_booked = space_booked #Space booked is set to the boolean value 0 (indicating false) when space is booked, value should be changed to 1 (true)
+
 
     # This method allows our tests to assert that the objects it expects
     # are the objects we made based on the database records.

@@ -4,6 +4,8 @@ from flask import Flask, request, render_template, redirect, session, Response, 
 from flask_bootstrap import Bootstrap
 from s3_functions import upload_file
 from werkzeug.utils import secure_filename
+from flask_login import LoginManager
+
 
 
 from lib.database_connection import get_flask_database_connection
@@ -31,26 +33,21 @@ app = Flask(__name__)
 # BUCKET = "makersbnb"
 Bootstrap(app)
 
-
+login_manager = LoginManager()
 """
 Routes for file upload
 """
 
 
-app.route('/list_a_space', methods= "POST")
-def upload(): 
-    if request.method == "POST":
-        img = request.files['space_photo']
-        if img:
-            filename = secure_filename(img.filename)
-            img.save(filename)
-            s3.upload_file(
-                Bucket = BUCKET_NAME,
-                Filename = filename,
-                Key = filename
-            )
-            msg = "Uploaded successfully!"
-    return render_template("/spaces/list_a_space.html", msg=msg)
+# app.route('/list_a_space', methods= "POST")
+# def upload(): 
+#         print(request.files)
+#         img = request.files['space_photo']
+#         if img:
+#             filename = secure_filename(img.filename)
+#             img.save(os.path.join(app.root_path, 'static/new_image', ))
+#             msg = "Uploaded successfully!"
+#         return render_template("/spaces/list_a_space.html", msg=msg)
 
 # app.route("/upload", methods = ["POST"])
 
@@ -73,92 +70,77 @@ def upload():
 
 
 
+"""
+Route for landing page
+"""
+@app.route('/', methods=['GET'])
+def landing():
+    return render_template('users/index.html', access='denied')
 
+"""
+Route for signup page
+"""
 
+@app.route('/signUp', methods=['GET'])
+def sign_up():
+    return render_template('users/signUp.html', access='denied')
 
+"""
+Route for about page
+"""
+
+@app.route('/about', methods=['GET'])
+def about():
+    return render_template('users/about.html', access='granted', visibility='hidden')
 
 """
 Routes for Users
 """
-@app.route('/', methods=['GET'])
-def get_index():
-    return render_template('users/index.html')
 
-
-@app.route("/signUp", methods=["GET"])
-def get_sign_up_page():
-    return render_template("users/signUp.html")
-
-
-@app.route("/index/about", methods=['GET'])
-def get_about():
-    return render_template('users/about.html')
-
-
-@app.route("/signUp", methods=["POST"])
-def create_user():
-        connection = get_flask_database_connection(app)
-        repository = UserRepository(connection)
-
-        user_name = request.form['user_name']
-        email = request.form['email']
-        password = request.form['user_password']
-        
-        user = User(None, user_name, email, password)
-
-        if not user.is_valid():
-            errors = user.generate_errors()
-            return render_template("users/signUp.html", errors=errors)
-
-        repository.create(user)
-
-        return redirect('/login')
-
-"""
-Routes for login
-"""
 
 @app.route('/login',methods=['GET'])
 def get_login():
-    return render_template('login/login.html')
+    if 'token' in session:
+      return redirect(f"/spaces")
+    return render_template('login/login.html', access='denied')
 
 
 @app.route("/login", methods=["POST"])
 def login_user():
-    # if 'token' in session:
-    #     response = {'token': session['token'], 'message': 'Already logged in'}
-    #     return Response(json.dumps(response), status=200, mimetype='application/json')
-    
-    # else:
-        connection = get_flask_database_connection(app)
-        repository = LoginRepository(connection)
-        validator = LoginValidator(
-            request.form['user_name'],
-            request.form['user_password']
-        )
-        if not validator.is_valid():
-            errors = validator.generate_errors()
-            return render_template("login/login.html", errors=errors)
+    if 'token' in session:
+        return redirect(f"/spaces")
+    connection = get_flask_database_connection(app)
+    repository = LoginRepository(connection)
+    validator = LoginValidator(
+        request.form['user_name'],
+        request.form['user_password']
+    )
+    if not validator.is_valid():
+        errors = validator.generate_errors()
+        return render_template("login/login.html", errors=errors)
         
-        user_name = request.form['user_name']
-        user_password = request.form['user_password']
-        result = repository.find(user_name, user_password)
-        print("result",result)
+    user_name = request.form['user_name']
+    user_password = request.form['user_password']
+    result = repository.find(user_name, user_password)
 
-        if result:
-            token = secrets.token_urlsafe(64)
-            session['token'] = token
-            print(session['token'])
-            login = LoginUser(
-                None,
-                validator.get_valid_user_name(),
-                validator.get_valid_user_password(),
-                result.id
-            )
-            return redirect(f"/spaces")
-        else:
-            return Response(response={"error logging in"}, status=400, mimetype='application/json')
+    print("result",result, "repository", repository)
+
+    if result:
+        token = secrets.token_urlsafe(64)
+        session['token'] = token
+        print(session['token'])
+        login = LoginUser(
+            None,
+            validator.get_valid_user_name(),
+            validator.get_valid_user_password(),
+            result.id
+        )
+        return redirect(f"/spaces")
+    else:
+        return Response(response={"error logging in"}, status=400, mimetype='application/json')
         
+
+
 @app.route('/logout',methods=['GET'])
 def get_logout():
     session.pop('token', None)
@@ -172,14 +154,16 @@ Routes for spaces
 
 @app.route('/spaces', methods=['GET'])
 def get_spaces():
+    if 'token' not in session:
+      return render_template('users/index.html', access='denied')
     connection = get_flask_database_connection(app)
     repository = SpaceRepository(connection)
     spaces = repository.all()
-    return render_template('spaces/spaces.html', spaces=spaces)
+    return render_template('spaces/spaces.html', spaces=spaces, visibility="hidden", access='granted')
 
 @app.route('/list_a_space', methods=['GET'])
 def get_list_a_space():
-    return render_template('spaces/list_a_space.html')
+    return render_template('spaces/list_a_space.html', visibility="hidden", access='granted')
 
 @app.route('/list_a_space', methods=['POST'])
 def create_spaces():
@@ -189,7 +173,13 @@ def create_spaces():
     # print("space photo data:", request.form["space_photo"])
     # BUCKET = "makersbnb"
     # upload = upload_file(request.form["space_photo"], BUCKET)
-    repository.create(space)
+    repository.create(space) 
+    print(request.files)
+    img = request.files['space_photo']
+    if img:
+      filename = secure_filename(img.filename)
+      img.save(os.path.join(app.root_path, 'static/image'))
+      msg = "Uploaded successfully!"
     return redirect('/spaces')
 
 
@@ -205,17 +195,18 @@ def create_spaces():
 
 
 @app.route('/requests', methods=['GET'])
-def get_requests():
-    return render_template('spaces/requests.html')
+def get_requests_page():
+    return render_template('spaces/requests.html', visibility="hidden", access='granted')
 
 @app.route('/requests', methods=['POST'])
-def get_requests_page():
+def submit_request():
+    approved=False
     connection = get_flask_database_connection(app)
     repository = SpaceRepository(connection)
     user = request.form["user_name"]
     spaces = repository.find_by_username(user)
 
-    return render_template('spaces/requests.html', spaces=spaces)
+    return render_template('spaces/requests.html', spaces=spaces, approved=True, visibility="hidden", access='granted')
 
 
 

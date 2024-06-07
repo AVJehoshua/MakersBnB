@@ -12,6 +12,11 @@
   <body>
     {% include 'navbar/navbar.html' %}
 
+      {% if approved == True %}
+      <div class="request-message">
+        Request Successful!
+      </div>
+      {% endif %}
     <div class="title-container">
       <br /><br />
     </div>
