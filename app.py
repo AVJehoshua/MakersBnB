@@ -36,19 +36,6 @@ Bootstrap(app)
 Routes for file upload
 """
 
-# app.config['S3_BUCKET'] = 'makersbnb'
-# app.config['S3_KEY'] = os.environ.get("AWS_ACCESS_KEY")
-# app.config['S3_SECRET'] = os.environ.get("AWS_ACCESS_SECRET")
-# app.config['S3_LOCATION'] = 'http://{}.s3.amazonaws.com/'.format(S3_BUCKET)
-
-
-s3 = boto3.client(
-    "s3",
-    aws_access_key_id= os.getenv('AWS_ACCESS_KEY'),
-    aws_secret_access_key= os.getenv('AWS_ACCESS_SECRET')
-)
-
-BUCKET_NAME = "makersbnb"
 
 app.route('/list_a_space', methods= "POST")
 def upload(): 
