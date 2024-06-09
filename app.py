@@ -128,7 +128,6 @@ def login_user():
     if result:
         token = secrets.token_urlsafe(64)
         session['token'] = token
-        print(session['token'])
         login = LoginUser(
             None,
             validator.get_valid_user_name(),
