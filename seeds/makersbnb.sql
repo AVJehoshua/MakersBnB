@@ -11,8 +11,6 @@ CREATE TABLE IF NOT EXISTS users(
 
 -- Drop the 'spaces' table if it exists, along with any dependent objects
 
-
-
 DROP TABLE spaces;
 
 

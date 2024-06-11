@@ -1,13 +1,13 @@
 class Space:
     # We initialise with all of our attributes
     # Each column in the table should have an attribute here
-    def __init__(self, id, space_name, space_description, price, host_id, guest_id=0):
+    def __init__(self, id, space_name, space_description, space_image, price, host_id, guest_id=0):
         self.id = id
         self.space_name = space_name
         self.space_description= space_description
+        self.space_image = space_image
         self.price = price
         self.host_id = host_id
-        # self.space_image = space_image
         self.guest_id = guest_id
 
 
@@ -18,4 +18,4 @@ class Space:
 
     # This method makes it look nicer when we print an Space
     def __repr__(self):
-        return f"Space({self.id}, {self.space_name}, {self.space_description}, {self.price}, {self.host_id})"
+        return f"Space({self.id}, {self.space_name}, {self.space_description}, {self.space_image}, {self.price}, {self.host_id})"
