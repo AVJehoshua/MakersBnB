@@ -6,3 +6,4 @@ screenshot.png
 node_modules
 dist
 .env
+/static/image/
