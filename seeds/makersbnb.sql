@@ -31,4 +31,4 @@ CREATE TABLE IF NOT EXISTS spaces(
 INSERT INTO users (user_name, email, user_password) VALUES ('test user name','test email', 'test password');
 
 -- Insert a test record into the 'spaces' table
-INSERT INTO spaces (space_name, space_description, space_image, price, host_id) VALUES ('test space name', 'test space description', 'test space image', 1, 1);
+INSERT INTO spaces (space_name, space_description, space_image, price, host_id) VALUES ('test space name', 'test space description', 'blog-debug.jpeg', 1, 1);
