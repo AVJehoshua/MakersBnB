@@ -6,8 +6,6 @@ from s3_functions import upload_file
 from werkzeug.utils import secure_filename
 from flask_login import LoginManager
 
-
-
 from lib.database_connection import get_flask_database_connection
 from lib.space_repository import SpaceRepository
 from lib.space import Space
@@ -40,10 +38,10 @@ Route for landing page
 def landing():
     return render_template('users/index.html', access='denied')
 
-"""
-Route for signup page
-"""
 
+"""
+Route for user signup
+"""
 @app.route('/signUp', methods=['GET', 'POST'])
 def sign_up():
     if request.method == 'POST':
@@ -58,19 +56,20 @@ def sign_up():
         return redirect('/login')
     return render_template('users/signUp.html', access='denied')
 
+
 """
 Route for about page
 """
-
 @app.route('/about', methods=['GET'])
 def about():
+    if 'token' not in session:
+      return render_template('users/about.html', access='denied')
     return render_template('users/about.html', access='granted', visibility='hidden')
 
-"""
-Routes for Users
-"""
 
-
+"""
+Routes for user login / logout
+"""
 @app.route('/login',methods=['GET'])
 def get_login():
     if 'token' in session:
@@ -141,9 +140,6 @@ def get_list_a_space():
 def create_spaces():
     connection = get_flask_database_connection(app)
     repository = SpaceRepository(connection)
-    # space = Space(None, request.form["space_name"], request.form["space_description"], "", request.form["price"], 1)
-    print(request.files)
-
     img = request.files['space_image']
     if img:
         filename = secure_filename(img.filename)
@@ -157,21 +153,14 @@ def create_spaces():
         msg = "Uploaded successfully!"
         print(msg)
         
-    space = Space(None, request.form["space_name"], request.form["space_description"], filename, request.form["price"], 1)
+    space = Space(None, request.form["space_name"], request.form["space_description"], filename, request.form["price"], None)
     repository.create(space)
     return redirect('/spaces')
 
 
-
-# @app.route("/upload", methods=['POST'])
-# def upload():
-#     if request.method == "POST":
-#         f = request.files['file']
-#         f.save(os.path.join(UPLOAD_FOLDER, secure_filename(f.filename)))
-#         upload_file(f"uploads/{f.filename}", BUCKET)
-#         return redirect("/spaces/list_a_space.html")
-
-
+"""
+Routes for requests page
+"""
 
 @app.route('/requests', methods=['GET'])
 def get_requests_page():
@@ -186,13 +175,6 @@ def submit_request():
     spaces = repository.find_by_username(user)
 
     return render_template('spaces/requests.html', spaces=spaces, approved=True, visibility="hidden", access='granted')
-
-
-
-@app.route('/dist/<path:filename>')
-def serve_static(filename):
-    root_dir = os.path.dirname(os.getcwd())
-    return send_from_directory(os.path.join(root_dir, 'dist'), filename)
 
 # start the server and set the secret key and session type
 if __name__ == '__main__':
