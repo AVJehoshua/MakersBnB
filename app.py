@@ -18,11 +18,6 @@ from lib.users_repository import *
 from lib.users import *
 import boto3
 
-
-"""
-testing commit for pu
-"""
-
 import json
 import secrets
 
@@ -36,40 +31,6 @@ app = Flask(__name__)
 Bootstrap(app)
 
 login_manager = LoginManager()
-"""
-Routes for file upload
-"""
-
-
-# app.route('/list_a_space', methods= "POST")
-# def upload(): 
-#         print(request.files)
-#         img = request.files['space_photo']
-#         if img:
-#             filename = secure_filename(img.filename)
-#             img.save(os.path.join(app.root_path, 'static/new_image', ))
-#             msg = "Uploaded successfully!"
-#         return render_template("/spaces/list_a_space.html", msg=msg)
-
-# app.route("/upload", methods = ["POST"])
-
-# def upload_file():
-#     if "user_file" not in request.files:
-#         return "No user_file key in request.files"
-
-#     file = request.files["user_file"]
-
-#     if file.filename == "":
-#         return "Please select a file"
-
-#     if file:
-#         file.filename = secure_filename(file.filename)
-#         output = send_to_s3(file, app.config["S3_BUCKET"])
-#         return str(output)
-
-#     else:
-#         return redirect("/upload")
-
 
 
 """
@@ -83,8 +44,18 @@ def landing():
 Route for signup page
 """
 
-@app.route('/signUp', methods=['GET'])
+@app.route('/signUp', methods=['GET', 'POST'])
 def sign_up():
+    if request.method == 'POST':
+        connection = get_flask_database_connection(app)
+        repository = UserRepository(connection)
+        user_name = request.form.get('user_name')
+        email = request.form.get('email')
+        user_password = request.form.get('user_password')
+        print(f'Username: {user_name}, Email: {email}, Password: {user_password}')
+        user = User(None, user_name, email, user_password)
+        repository.create(user)
+        return redirect('/login')
     return render_template('users/signUp.html', access='denied')
 
 """
@@ -170,17 +141,24 @@ def get_list_a_space():
 def create_spaces():
     connection = get_flask_database_connection(app)
     repository = SpaceRepository(connection)
-    space = Space(None, request.form["space_name"], request.form["space_description"], request.form["price"], 1)
-    # print("space photo data:", request.form["space_photo"])
-    # BUCKET = "makersbnb"
-    # upload = upload_file(request.form["space_photo"], BUCKET)
-    repository.create(space) 
+    # space = Space(None, request.form["space_name"], request.form["space_description"], "", request.form["price"], 1)
     print(request.files)
-    img = request.files['space_photo']
+
+    img = request.files['space_image']
     if img:
-      filename = secure_filename(img.filename)
-      img.save(os.path.join(app.root_path, 'static/image'))
-      msg = "Uploaded successfully!"
+        filename = secure_filename(img.filename)
+        upload_path = os.path.join(app.root_path, 'static/image/')
+        
+        # Ensure the directory exists
+        if not os.path.exists(upload_path):
+            os.makedirs(upload_path)
+        
+        img.save(os.path.join(upload_path, filename))
+        msg = "Uploaded successfully!"
+        print(msg)
+        
+    space = Space(None, request.form["space_name"], request.form["space_description"], filename, request.form["price"], 1)
+    repository.create(space)
     return redirect('/spaces')
 
 

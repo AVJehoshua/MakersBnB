@@ -11,14 +11,14 @@ class SpaceRepository:
         rows = self._connection.execute('SELECT * from spaces')
         spaces = []
         for row in rows:
-            item = Space(row["id"], row["space_name"], row["space_description"], row["price"], row["host_id"])
+            item = Space(row["id"], row["space_name"], row["space_description"], row["space_image"], row["price"], row["host_id"])
             spaces.append(item)
         return spaces
     
     # Create a new space
     def create(self, new_space):
-        rows = self._connection.execute('INSERT INTO spaces (space_name, space_description, price, host_id) VALUES (%s, %s, %s, %s) RETURNING id', [
-                                    new_space.space_name, new_space.space_description, new_space.price, new_space.host_id])
+        rows = self._connection.execute('INSERT INTO spaces (space_name, space_description, space_image, price, host_id) VALUES (%s, %s, %s, %s, %s) RETURNING id', [
+                                    new_space.space_name, new_space.space_description, new_space.space_image, new_space.price, new_space.host_id])
         row = rows[0]
         new_space.id = row["id"]
         return new_space
@@ -26,12 +26,12 @@ class SpaceRepository:
         
     def find_by_username(self, username):
         rows = self._connection.execute(
-            "SELECT users.id AS user_id, users.user_name, spaces.id AS spaces_id, spaces.space_name, spaces.space_description, spaces.price, spaces.host_id AS host_id " \
+            "SELECT users.id AS user_id, users.user_name, spaces.id AS spaces_id, spaces.space_name, spaces.space_description, spaces.space_image, spaces.price, spaces.host_id AS host_id " \
             "FROM users JOIN spaces ON users.id = spaces.host_id " \
             "WHERE users.user_name = %s", [username])
         space_list = []
         for row in rows:
-            item=Space(row["spaces_id"], row["space_name"], row["space_description"], row["price"], row["host_id"])
+            item=Space(row["spaces_id"], row["space_name"], row["space_description"], row["space_image"], row["price"], row["host_id"])
             space_list.append(item)    
         return space_list
     
